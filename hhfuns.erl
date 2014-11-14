@@ -74,10 +74,7 @@ sum2([H|T], Sum) -> sum2(T, Sum+H).
 fold(_, Start, []) -> Start;
 fold(F, Start, [H|T]) -> fold(F, F(H,Start), T).
 
-
-
 reverse(L) -> fold(fun(X,Acc) -> [X|Acc] end, [], L).
-
 map2(F,L) -> reverse(fold(fun(X,Acc) -> [F(X)|Acc] end, [], L)).
 
 
