@@ -23,14 +23,13 @@ fridge2(FoodList) ->
 	receive
 		{From, {store, Food}} ->
 			MyFood = [Food|FoodList],
-			From ! {self(),MyFood},
+			From ! {self(),{ok,MyFood}},
 			fridge2(MyFood);
 		{From, {take, Food}} ->
 			case lists:member(Food, FoodList) of
 				true ->
-					MyFood = lists:delete(Food, FoodList),
-					From ! {self(), {ok, MyFood}},
-					fridge2(lists:delete(Food, MyFood));
+					From ! {self(), {ok, Food}},
+					fridge2(lists:delete(Food, FoodList));
 				false ->
 					From ! {self(), not_found},
 					fridge2(FoodList)
@@ -38,6 +37,47 @@ fridge2(FoodList) ->
 		terminate ->
 			ok
 	end.
+
+
+store (Pid, Food) ->
+	Pid ! {self(), {store,Food}},
+	receive
+		{Pid, Msg} -> Msg
+	end.
+
+take(Pid, Food) ->
+	Pid ! {self(), {take, Food}},
+	receive
+		{Pid, Msg} -> Msg
+	end.
+
+
+start(FoodList) ->
+	spawn(?MODULE, fridge2, [FoodList]).
+
+
+store2(Pid, Food) ->
+	Pid ! {self(), {store, Food}},
+	receive
+		{Pid, Msg} -> Msg
+	after 3000 ->
+		timeout
+	end.
+
+
+take2(Pid, Food) ->
+	Pid ! {self(), {take, Food}},
+	receive
+		{Pid, Msg} -> Msg
+	after 3000 ->
+		timeout
+	end.
+
+
+
+
+
+
 
 
 
