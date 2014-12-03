@@ -12,7 +12,6 @@ flush() ->
 	after 0 -> ok
 	end.
 
-%% gogos
 
 important() ->
 	receive
