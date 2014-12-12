@@ -42,6 +42,40 @@ critic().
 
 
 
+start_critic2() ->
+	spawn(?MODULE, restarter, []).
+
+restarter() ->
+	process_flag(trap_exit, true),
+	Pid = spawn_link(?MODULE, critic, []),
+	register(critic, Pid),
+	receive
+		{'EXIT', Pid, mormal} ->
+			ok;
+		{'EXIT', Pid, shutdown} ->
+			ok;
+		{'EXIT', Pid, _} ->
+			restarter()
+	end.
+
+
+judge2(Band, Album) ->
+	Ref = make_ref(),
+	critic ! {self(),Ref, {Band, Album}},
+	Pid = whereis(critic),
+	receive
+		{Ref, Criticism} -> Criticism
+	after 2000 ->
+		timeout
+	end.
+
+
+
+
+
+
+
+
 
 
 
