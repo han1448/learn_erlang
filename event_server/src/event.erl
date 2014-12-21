@@ -1,5 +1,5 @@
 -module(event).
--complie([loop/1]).
+-compile(export_all).
 -record(state, {server, name="", to_go=0}).
 
 
@@ -10,3 +10,5 @@ loop (S = #state{server=Server}) ->
 	after S#state.to_go*1000 ->
 		Server ! {done, S#state.name}
 	end.
+
+
