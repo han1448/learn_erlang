@@ -5,6 +5,9 @@
 -record(event, {name="", description="", pid, timeout={{1970,1,1},{0,0,0}}}).
 
 
+init() ->
+	loop(#state{events=orddict:new(), clients=orddict:new()}).
+
 loop(S = #state{}) ->
 	receive
 		{Pid, MsgRef, {subscribe, Client}} ->
@@ -28,22 +31,42 @@ loop(S = #state{}) ->
 			end;
 		{Pid, MsgRef, {cancel, Name}} ->
 			%% cancel event...
-			io:format("cancel event",[]);
+			io:format("cancel event",[]),
+			Events = case orddict:find(Name,S#state.events) of
+				{ok, E} ->
+					event:cancel(E#event.pid),
+					orddic:erase(Name,S#state.events);
+				error ->
+					S#state.events
+				end,
+			Pid ! {MsgRef, ok},
+			loop(S#state{events=Events});
 		{done, Name} ->
 			%% done event...
-			io:format("done event",[]);
+			io:format("done event",[]),
+			case orddict:find(Name,S#state.events) of
+				{ok, E} ->
+					send_to_client({done, E#event.name, E#event.description}, S#state.clients),
+					NewEvents = orddict:erase(Name, S#state.events),
+					loop(S#state{events=NewEvents});
+				error ->
+					loop(S)
+			end;
 		shutdown ->
 			%% shutdown
-			io:format("shutdown",[]);
+			io:format("shutdown",[]),
+			exit(shutdown);
 		{'DOWN', Ref, process, _Pid, _Reason} ->
 			%% down process...
-			io:format("down process",[]);
+			io:format("down process",[]),
+			loop(S#state{clients=orddict:erase(Ref, S#state.clients)});
 		code_change ->
 			%%...
-			io:formant("code change",[]);
+			io:formant("code change",[]),
+			loop(S);
 		Unknown ->
 			io:format("Unknown message: ~p~n",[Unknown]),
-			loop(State)
+			loop(S)
 	end.
 	
 
@@ -67,5 +90,9 @@ valid_time(H,M,S) when H >= 0 , H < 24,
 											S >= 0 , S < 60 -> true;
 valid_time(_,_,_) ->
 	false.
+
+
+send_to_client(Msg, ClientDict) ->
+	orddict:map(fun(_Ref, Pid) -> Pid ! Msg end, ClientDict).
 
 

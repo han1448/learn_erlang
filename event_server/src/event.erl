@@ -6,7 +6,7 @@
 loop (S = #state{server=Server, to_go=[T|Next]}) ->
 	receive
 		{Server, Ref, cancel} ->
-			Server ! {Ref, ok}
+			Server ! {Ref, cancel_ok}
 	after T*1000 ->
 		if Next =:= [] ->
 				Server ! {done, S#state.name};
@@ -33,9 +33,9 @@ cancel(Pid) ->
 	Ref = erlang:monitor(process, Pid),
 	Pid ! {self(), Ref, cancel},
 	receive
-		{Ref, ok} -> 
+		{Ref, cancel_ok} -> 
 			erlang:demonitor(Ref, [flush]),
-			ok;
+			received_cancel_ok;
 		{'DOWN', Ref, process, Pid, _Reason} ->
 			ok
 	end.
