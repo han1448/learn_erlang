@@ -96,3 +96,25 @@ send_to_client(Msg, ClientDict) ->
 	orddict:map(fun(_Ref, Pid) -> Pid ! Msg end, ClientDict).
 
 
+start() ->
+	register(?MODULE, Pid = spawn(?MODULE, init,[])),
+	Pid.
+
+start_link ->
+	register(?MODULE, Pid = spawn_link(?MODULE, init,[])),
+	Pid.
+
+terminate() ->
+	?MODULE ! shutdown.
+
+subscribe(Pid) ->
+	Ref = erlang:monitor(process, whereis(?MODULE)),
+	?MODULE ! {self(), Ref, {subscribe, Pid}},
+	receive
+		{Ref, ok} ->
+			{ok, Ref};
+		{'DOWN', Ref, process, _Pid, Reason} ->
+			{error, Reason}
+	after 5000 ->
+		{error, timeout}
+	end.
