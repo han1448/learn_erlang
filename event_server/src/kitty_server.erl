@@ -54,5 +54,22 @@ loop(Cats) ->
 			loop([Cat|Cats]);
 		{Pid, Ref, terminate} ->
 			Pid ! {Ref, ok},
-			terminate()
+			terminate(Cats);
+		Unknown ->
+			%% do some logging here too
+			io:format("Unknown message: ~p~n", [Unknown]),
+			loop(Cats)
+		end.
+ 
+%%% Private functions
+make_cat(Name, Col, Desc) ->
+#cat{name=Name, color=Col, description=Desc}.
+ 
+terminate(Cats) ->
+[io:format("~p was set free.~n",[C#cat.name]) || C <- Cats],
+ok.
+
+
+
+
 
