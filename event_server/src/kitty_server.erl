@@ -15,7 +15,9 @@ order_cat(Pid, Name, Color, Description) ->
 			erlang:demonitor(Ref, [flush]),
 			Cat;
 		{'DOWN', Ref, process, Pid, Reason} ->
-			erlang:error(timeout)
+			erlang:error(Reason)
+	after 5000 ->
+		erlang:error(timeout)
 	end.
 
 
@@ -38,6 +40,8 @@ close_shop(Pid) ->
 		erlang:error(timeout)
 	end.
 
+%%% Server functions
+init() -> loop([]).
 
 %%% Server functions
 loop(Cats) ->
@@ -50,9 +54,24 @@ loop(Cats) ->
 				Pid ! {Ref, hd(Cats)},
 				loop(tl(Cats))
 			end;
-		{return, Cat #cat{}} ->
+		{return, Cat =  #cat{}} ->
 			loop([Cat|Cats]);
 		{Pid, Ref, terminate} ->
 			Pid ! {Ref, ok},
-			terminate()
+			terminate(Cats);
+		Unknown ->
+			io:format("Unknown message: ~p~n", [Unknown]),
+			loop(Cats)
+	end.
+
+
+%%% Private functions
+make_cat(Name, Col, Desc) ->
+	#cat{name=Name, color=Col, description=Desc}.
+
+terminate(Cats) ->
+	[io:format("~p was set free.~n",[C#cat.name]) || C <- Cats],
+	ok.
+
+
 
