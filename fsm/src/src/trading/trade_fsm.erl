@@ -20,6 +20,13 @@ idle/2, idle/3, idle_wait/2, idle_wait/3, negotiate/2,
 negotiate/3, wait/2, ready/2, ready/3]).
 
 
+
+%% ====================================================================
+%% gen_fsm callback functions
+%% ====================================================================
+
+
+
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
@@ -32,4 +39,8 @@ start(Name) ->
 start_link(Name) ->
 	gen_fsm:start_link(?MODULE, [Name], []).
 
+
+%% ask for a begin session. Returns when/if the other accepts
+trade(OwnPid, OtherPid) ->
+	gen_fsm:sync_send_event(OwnPid, {negotiate, OtherPid}, 30000).
 
